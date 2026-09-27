@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">RupeeMath</string>
+    <string name="app_name">CashMath</string>
+    <string name="default_web_client_id">525493190847-2e50hrea557qpul7ho4ng1ogqk3kvjrs.apps.googleusercontent.com</string>
 </resources>

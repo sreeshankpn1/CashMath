@@ -1,0 +1,27 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+		1D60589B0D05DD56006BFB54 /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D60589A0D05DD56006BFB54 /* iOSApp.swift */; };
+		1D60589D0D05DD56006BFB54 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D60589C0D05DD56006BFB54 /* ContentView.swift */; };
+		1D6058940D05DD56006BFB54 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D60589A0D05DD56006BFB54 /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
+		1D60589C0D05DD56006BFB54 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1D60588F0D05DD56006BFB54 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		19C28FACFE9D520D11CA2CBB = {isa = PBXGroup; children = (1D6058980D05DD56006BFB54 /* iosApp */, 1D6058950D05DD56006BFB54 /* Products */); sourceTree = "<group>"; };
+		1D6058950D05DD56006BFB54 /* Products */ = {isa = PBXGroup; children = (1D6058940D05DD56006BFB54 /* iosApp.app */); name = Products; sourceTree = "<group>"; };
+		1D6058980D05DD56006BFB54 /* iosApp */ = {isa = PBXGroup; children = (1D60589A0D05DD56006BFB54 /* iOSApp.swift */, 1D60589C0D05DD56006BFB54 /* ContentView.swift */); path = iosApp; sourceTree = "<group>"; };
+		1D6058930D05DD56006BFB54 /* iosApp */ = {isa = PBXNativeTarget; buildConfigurationList = 1D6058960D05DD56006BFB54; buildPhases = (1D60588E0D05DD56006BFB54 /* Sources */, 1D60588F0D05DD56006BFB54 /* Frameworks */); buildRules = (); dependencies = (); name = iosApp; productName = iosApp; productReference = 1D6058940D05DD56006BFB54; productType = "com.apple.product-type.application"; };
+		29B97313FDCFA39411CA2CEA /* Project object */ = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 1500; TargetAttributes = {1D6058930D05DD56006BFB54 = {CreatedOnToolsVersion = 15.0;};};}; buildConfigurationList = 29B97314FDCFA39411CA2CEA; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = 19C28FACFE9D520D11CA2CBB; productRefGroup = 1D6058950D05DD56006BFB54; projectDirPath = ""; projectRoot = ""; targets = (1D6058930D05DD56006BFB54 /* iosApp */); };
+		1D60588E0D05DD56006BFB54 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (1D60589B0D05DD56006BFB54 /* iOSApp.swift in Sources */, 1D60589D0D05DD56006BFB54 /* ContentView.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+		29B97315FDCFA39411CA2CEA /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; ENABLE_TESTABILITY = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = iphoneos; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_VERSION = 5.0;}; name = Debug; };
+		29B97316FDCFA39411CA2CEA /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 15.0; SDKROOT = iphoneos; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_VERSION = 5.0;}; name = Release; };
+		1D6058970D05DD56006BFB54 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "RupeeMath"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = "com.rupeemath.app"; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Debug; };
+		1D6058980D05DD56006BFB54 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "RupeeMath"; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = "com.rupeemath.app"; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2";}; name = Release; };
+		29B97314FDCFA39411CA2CEA /* Build configuration list for PBXProject "iosApp" */ = {isa = XCConfigurationList; buildConfigurations = (29B97315FDCFA39411CA2CEA /* Debug */, 29B97316FDCFA39411CA2CEA /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		1D6058960D05DD56006BFB54 /* Build configuration list for PBXNativeTarget "iosApp" */ = {isa = XCConfigurationList; buildConfigurations = (1D6058970D05DD56006BFB54 /* Debug */, 1D6058980D05DD56006BFB54 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA;
+}

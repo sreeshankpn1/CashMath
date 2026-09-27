@@ -1,0 +1,78 @@
+[
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_phonepe.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_phonepe.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_gpay.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_gpay.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_stat_notification.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_stat_notification.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_bank.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_bank.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/xml_file_paths.xml.flat",
+        "source": "com.cashmath.app-main-85:/xml/file_paths.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_cash.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_cash.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_upi.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_upi.xml"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_app_logo_512.png.flat",
+        "source": "com.cashmath.app-main-85:/drawable/app_logo_512.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.cashmath.app-main-85:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.cashmath.app-debug-83:/drawable_ic_paytm.xml.flat",
+        "source": "com.cashmath.app-main-85:/drawable/ic_paytm.xml"
+    }
+]

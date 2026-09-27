@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "525493190847",
+    "project_id": "app-15510617",
+    "storage_bucket": "app-15510617.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:525493190847:android:e965fd96754dbebc0f460a",
+        "android_client_info": {
+          "package_name": "com.cashmath.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "525493190847-udpc539u3ggks8brmoud3f8nbj7q0avb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cashmath.app",
+            "certificate_hash": "b04ae46ad66534f2cc3fead2bb0c56011ea51289"
+          }
+        },
+        {
+          "client_id": "525493190847-2e50hrea557qpul7ho4ng1ogqk3kvjrs.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTPgg_VY-q-qKVpXoSYVs9e_-D9M24Z_U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "525493190847-2e50hrea557qpul7ho4ng1ogqk3kvjrs.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
