@@ -42,6 +42,7 @@ fun DuesEmiScreen(
     onEditLoan: (EmiLoanEntity) -> Unit = {},
     onIncrementPaidMonth: (Long) -> Unit,
     onDeleteLoan: (Long) -> Unit,
+    onPartyClick: (Long) -> Unit = {},
     onShareDuesPdf: () -> Unit = {},
     onShareDuesCsv: () -> Unit = {},
 ) {
@@ -66,6 +67,7 @@ fun DuesEmiScreen(
         onEditLoan = onEditLoan,
         onIncrementPaidMonth = onIncrementPaidMonth,
         onDeleteLoan = onDeleteLoan,
+        onPartyClick = onPartyClick,
         onShareDuesPdf = onShareDuesPdf,
         onShareDuesCsv = onShareDuesCsv,
     )

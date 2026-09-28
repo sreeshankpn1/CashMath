@@ -17,22 +17,22 @@ object TransactionSmsClassifier {
         "cashback", "cash back", "offer", "coupon", "reward", "congratulations",
         "grab", "eligible", "apply now", "win", "voucher", "discount", "bonus",
         "loan approved", "pre-approved", "credit card offer", "otp", "statement for",
-        "balance inquiry", "merchant payments"
+        "balance inquiry"
     )
 
-    private val debitVerbs = listOf(
-        "debited by", "debited with", "spent on", "paid to", "transferred to", "withdrawn"
+    // Regex for standard UPI & Bank Debit transactions
+    private val upiDebitPattern = Pattern.compile(
+        """(?:Paid|Sent|transferred|debited)\s+(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)\s+(?:to|for)\s+([A-Za-z0-9\s.]+?)(?:\.|\s+using|\s+from|$)""",
+        Pattern.CASE_INSENSITIVE
     )
 
-    private val creditVerbs = listOf(
-        "credited with", "credited by", "received from", "deposited"
+    // Regex for standard UPI & Bank Credit transactions
+    private val upiCreditPattern = Pattern.compile(
+        """(?:Received|credited)\s+(?:₹|Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)\s+(?:from|by)\s+([A-Za-z0-9\s.]+?)(?:\.|\s+using|\s+in|$)""",
+        Pattern.CASE_INSENSITIVE
     )
 
-    private val referenceTokens = listOf(
-        "a/c", "ending", "upi ref", "vpa", "ref no", "acc", "account", "a/c no"
-    )
-
-    private val amountPattern = Pattern.compile("""(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE)
+    private val fallbackAmountPattern = Pattern.compile("""(?:INR|Rs\.?|₹)\s*([\d,]+(?:\.\d{1,2})?)""", Pattern.CASE_INSENSITIVE)
 
     fun classify(title: String, body: String): ClassifiedSmsTransaction? {
         val fullText = "$title $body"
@@ -43,42 +43,65 @@ object TransactionSmsClassifier {
             return null
         }
 
-        // 2. Check for required reference token
-        val hasReference = referenceTokens.any { lowerText.contains(it) }
-        if (!hasReference) {
-            return null
+        // 2. Try structured UPI Debit pattern match
+        val debitMatcher = upiDebitPattern.matcher(fullText)
+        if (debitMatcher.find()) {
+            val amountStr = debitMatcher.group(1)?.replace(",", "") ?: ""
+            val amount = amountStr.toDoubleOrNull() ?: 0.0
+            val recipient = debitMatcher.group(2)?.trim()?.ifBlank { null } ?: "Vendor / Merchant"
+            if (amount > 0.0) {
+                return ClassifiedSmsTransaction(
+                    amount = amount,
+                    isDebit = true,
+                    partyOrSender = recipient,
+                    referenceToken = "UPI",
+                    rawText = body
+                )
+            }
         }
 
-        // 3. Determine action verb & transaction direction
-        val hasDebit = debitVerbs.any { lowerText.contains(it) }
-        val hasCredit = creditVerbs.any { lowerText.contains(it) }
+        // 3. Try structured UPI Credit pattern match
+        val creditMatcher = upiCreditPattern.matcher(fullText)
+        if (creditMatcher.find()) {
+            val amountStr = creditMatcher.group(1)?.replace(",", "") ?: ""
+            val amount = amountStr.toDoubleOrNull() ?: 0.0
+            val sender = creditMatcher.group(2)?.trim()?.ifBlank { null } ?: "Payer"
+            if (amount > 0.0) {
+                return ClassifiedSmsTransaction(
+                    amount = amount,
+                    isDebit = false,
+                    partyOrSender = sender,
+                    referenceToken = "UPI",
+                    rawText = body
+                )
+            }
+        }
+
+        // 4. Fallback Keyword & Amount Classification
+        val hasDebit = listOf("debited", "paid", "sent", "spent", "withdrawn").any { lowerText.contains(it) }
+        val hasCredit = listOf("credited", "received", "deposited").any { lowerText.contains(it) }
 
         if (!hasDebit && !hasCredit) {
             return null
         }
 
-        val isDebit = hasDebit
-
-        // 4. Extract Amount after INR / Rs. / ₹
-        val matcher = amountPattern.matcher(fullText)
-        if (!matcher.find()) {
-            return null
+        val fallbackMatcher = fallbackAmountPattern.matcher(fullText)
+        if (fallbackMatcher.find()) {
+            val amountStr = fallbackMatcher.group(1)?.replace(",", "") ?: ""
+            val amount = amountStr.toDoubleOrNull() ?: 0.0
+            if (amount > 0.0) {
+                val partyName = extractPartyName(lowerText) ?: if (hasDebit) "Vendor / Merchant" else "Payer"
+                return ClassifiedSmsTransaction(
+                    amount = amount,
+                    isDebit = hasDebit,
+                    partyOrSender = partyName,
+                    referenceToken = "Bank SMS",
+                    rawText = body
+                )
+            }
         }
 
-        val amountStr = matcher.group(1)?.replace(",", "") ?: return null
-        val amount = amountStr.toDoubleOrNull() ?: return null
-        if (amount <= 0.0) return null
-
-        // 5. Extract Party or Merchant Name if available
-        val partyName = extractPartyName(lowerText) ?: if (isDebit) "Vendor / Merchant" else "Payer"
-
-        return ClassifiedSmsTransaction(
-            amount = amount,
-            isDebit = isDebit,
-            partyOrSender = partyName,
-            referenceToken = referenceTokens.firstOrNull { lowerText.contains(it) },
-            rawText = body
-        )
+        return null
     }
 
     private fun extractPartyName(lowerText: String): String? {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -46,12 +48,15 @@ fun PartyDetailScreen(
     transactions: List<PartyTransactionEntity> = emptyList(),
     businessName: String = "CashMath Ledger",
     onNavigateBack: () -> Unit,
+    onAddTransaction: (amount: Double, isCredit: Boolean, remarks: String, mode: String) -> Unit = { _, _, _, _ -> },
     onSettleBalance: (amount: Double, paymentMode: String, isFullSettlement: Boolean, recordInCashbook: Boolean) -> Unit
 ) {
     val context = LocalContext.current
 
     var showSettleSheet by remember { mutableStateOf(false) }
     var showWhatsAppPreviewSheet by remember { mutableStateOf(false) }
+    var showAddTxSheet by remember { mutableStateOf(false) }
+    var addTxIsCredit by remember { mutableStateOf(false) }
 
     val netBalance = party.toReceive - party.toPay
     val isReceivable = netBalance > 0
@@ -101,14 +106,60 @@ fun PartyDetailScreen(
                         }) {
                             Icon(Icons.Default.Phone, contentDescription = "Call", tint = NeonEmerald)
                         }
-                    }
 
-                    IconButton(onClick = { showWhatsAppPreviewSheet = true }) {
-                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "WhatsApp", tint = NeonEmerald)
+                        IconButton(onClick = { showWhatsAppPreviewSheet = true }) {
+                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "WhatsApp", tint = NeonEmerald)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepObsidian)
             )
+        },
+        bottomBar = {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = SurfaceCard,
+                tonalElevation = 8.dp,
+                border = BorderStroke(1.dp, CardBorder)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .navigationBarsPadding(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // RED BUTTON: You Gave (Udhaar Given / Debit)
+                    Button(
+                        onClick = {
+                            addTxIsCredit = false
+                            showAddTxSheet = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonCoral),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text("You Gave ₹", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.White)
+                    }
+
+                    // GREEN BUTTON: You Got (Payment Received / Credit)
+                    Button(
+                        onClick = {
+                            addTxIsCredit = true
+                            showAddTxSheet = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonEmerald),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
+                    ) {
+                        Text("You Got ₹", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color.Black)
+                    }
+                }
+            }
         },
         containerColor = DeepObsidian
     ) { innerPadding ->
@@ -142,7 +193,7 @@ fun PartyDetailScreen(
                         text = when {
                             isReceivable -> "YOU WILL GET (CUSTOMER OWES YOU)"
                             isPayable -> "YOU WILL GIVE (SUPPLIER DUE)"
-                            else -> "ACCOUNT SETTLED"
+                            else -> "SETTLED / NO BALANCE"
                         },
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -213,7 +264,9 @@ fun PartyDetailScreen(
                     border = BorderStroke(1.dp, CardBorder)
                 ) {
                     Box(
-                        modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(24.dp)
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text("No credit/debit history recorded yet.", color = MutedLabel, fontSize = 13.sp)
@@ -225,8 +278,8 @@ fun PartyDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(transactions) { tx ->
-                        val isGreen = tx.isCredit
-                        val itemColor = if (isGreen) NeonEmerald else NeonCoral
+                        val isCredit = tx.isCredit
+                        val itemColor = if (isCredit) NeonEmerald else NeonCoral
 
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -250,7 +303,7 @@ fun PartyDetailScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = if (isGreen) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
+                                            imageVector = if (isCredit) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
                                             contentDescription = null,
                                             tint = itemColor,
                                             modifier = Modifier.size(18.dp)
@@ -261,7 +314,7 @@ fun PartyDetailScreen(
 
                                     Column {
                                         Text(
-                                            text = tx.remarks.ifBlank { if (isGreen) "Gave (+) Credit" else "Got (-) Payment" },
+                                            text = tx.remarks.ifBlank { if (isCredit) "Payment Received (Got)" else "Udhaar Given (Gave)" },
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp,
                                             color = Color.White
@@ -275,7 +328,7 @@ fun PartyDetailScreen(
                                 }
 
                                 Text(
-                                    text = "${if (isGreen) "+" else "-"}${formatIndianCurrency(tx.amount)}",
+                                    text = "${if (isCredit) "+" else "-"}${formatIndianCurrency(tx.amount)}",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 15.sp,
                                     color = itemColor
@@ -286,6 +339,19 @@ fun PartyDetailScreen(
                 }
             }
         }
+    }
+
+    if (showAddTxSheet) {
+        AddPartyTxBottomSheet(
+            partyName = party.name,
+            isCredit = addTxIsCredit,
+            onDismiss = { showAddTxSheet = false },
+            onConfirm = { amount, remarks, mode ->
+                onAddTransaction(amount, addTxIsCredit, remarks, mode)
+                Toast.makeText(context, "Entry recorded successfully! ✓", Toast.LENGTH_SHORT).show()
+                showAddTxSheet = false
+            }
+        )
     }
 
     if (showSettleSheet) {
@@ -309,5 +375,114 @@ fun PartyDetailScreen(
             defaultMessage = currentMsg,
             onDismiss = { showWhatsAppPreviewSheet = false }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddPartyTxBottomSheet(
+    partyName: String,
+    isCredit: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (amount: Double, remarks: String, mode: String) -> Unit
+) {
+    var amountText by remember { mutableStateOf("") }
+    var remarksText by remember { mutableStateOf("") }
+    var paymentMode by remember { mutableStateOf("Cash") }
+
+    val primaryColor = if (isCredit) NeonEmerald else NeonCoral
+    val titleText = if (isCredit) "You Got (Payment Received)" else "You Gave (Udhaar Given)"
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceCard,
+        contentColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .navigationBarsPadding()
+        ) {
+            Text(
+                text = "$titleText - $partyName",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = primaryColor
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = { amountText = it },
+                label = { Text("Amount (₹)", color = MutedLabel) },
+                placeholder = { Text("e.g. 17000", color = MutedLabel) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = CardBorder,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = remarksText,
+                onValueChange = { remarksText = it },
+                label = { Text("Note / Remarks", color = MutedLabel) },
+                placeholder = { Text("e.g. Bill #102, Cash payment, Goods, etc.", color = MutedLabel) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = CardBorder,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf("Cash", "Online", "UPI").forEach { mode ->
+                    val isSelected = paymentMode == mode
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { paymentMode = mode },
+                        label = { Text(mode) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = primaryColor.copy(alpha = 0.2f),
+                            selectedLabelColor = primaryColor
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    val amount = amountText.toDoubleOrNull() ?: 0.0
+                    if (amount > 0.0) {
+                        onConfirm(amount, remarksText.trim(), paymentMode)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                Text("Save Entry", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = if (isCredit) Color.Black else Color.White)
+            }
+        }
     }
 }

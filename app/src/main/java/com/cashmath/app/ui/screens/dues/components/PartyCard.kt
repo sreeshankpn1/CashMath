@@ -2,6 +2,7 @@ package com.cashmath.app.ui.screens.dues.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,12 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cashmath.app.data.DuePartyEntity
 import com.cashmath.app.ui.theme.LocalThemeIsDark
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 
 @Composable
 fun PartyCard(
     party: DuePartyEntity,
+    onPartyClick: () -> Unit = {},
     onWhatsAppClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -34,8 +38,37 @@ fun PartyCard(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
+    val isDark = LocalThemeIsDark.current
+    val netBalance = party.toReceive - party.toPay
+    val isGet = netBalance > 0
+    val isPay = netBalance < 0
+    val isSettled = abs(netBalance) < 0.01
+
+    val partyGreen = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
+    val partyRed = if (isDark) Color(0xFFF87171) else Color(0xFFB91C1C)
+    val neutralColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val amountColor = when {
+        isGet -> partyGreen
+        isPay -> partyRed
+        else -> neutralColor
+    }
+    val statusText = when {
+        isGet -> "You'll Get"
+        isPay -> "You'll Pay"
+        else -> "Settled"
+    }
+
+    val subtitleText = when {
+        !party.phone.isNullOrBlank() -> party.phone
+        party.updatedAt > 0 -> "Updated ${SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH).format(Date(party.updatedAt))}"
+        else -> ""
+    }
+
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onPartyClick() },
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -74,30 +107,25 @@ fun PartyCard(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = if (!party.phone.isNullOrBlank()) party.phone else "Tap to view khata history",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (subtitleText.isNotBlank()) {
+                        Text(
+                            text = subtitleText,
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 // Amount & Status
-                val isDark = LocalThemeIsDark.current
-                val isGet = party.toReceive > 0
-                val amountVal = if (isGet) party.toReceive else party.toPay
-                val partyGreen = if (isDark) Color(0xFF34D399) else Color(0xFF047857)
-                val partyRed = if (isDark) Color(0xFFF87171) else Color(0xFFB91C1C)
-                val amountColor = if (isGet) partyGreen else partyRed
-
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = if (isGet) "You'll Get" else "You'll Pay",
+                        text = statusText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = amountColor
                     )
                     Text(
-                        text = "₹ ${String.format(Locale.getDefault(), "%,.2f", abs(amountVal))}",
+                        text = "₹ ${String.format(Locale.getDefault(), "%,.2f", abs(netBalance))}",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = amountColor
@@ -142,45 +170,46 @@ fun PartyCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-            Spacer(modifier = Modifier.height(8.dp))
+            // --- BOTTOM ROW: WhatsApp Reminder Action (Only if Phone is present) ---
+            if (!party.phone.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // --- BOTTOM ROW: Refined WhatsApp Reminder Action ---
-            val isDark = LocalThemeIsDark.current
-            val whatsappGreen = Color(0xFF25D366)
-            val neutralBg = if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC)
-            val neutralBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
-            val btnTextColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
+                val whatsappGreen = Color(0xFF25D366)
+                val neutralBg = if (isDark) Color(0xFF1E293B) else Color(0xFFF8FAFC)
+                val neutralBorder = if (isDark) Color(0xFF334155) else Color(0xFFE2E8F0)
+                val btnTextColor = if (isDark) Color(0xFFF8FAFC) else Color(0xFF0F172A)
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    onClick = onWhatsAppClick,
-                    shape = RoundedCornerShape(20.dp),
-                    color = neutralBg,
-                    border = BorderStroke(1.dp, neutralBorder)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        onClick = onWhatsAppClick,
+                        shape = RoundedCornerShape(20.dp),
+                        color = neutralBg,
+                        border = BorderStroke(1.dp, neutralBorder)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Remind",
-                            tint = whatsappGreen,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "WhatsApp Remind",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = btnTextColor
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Remind",
+                                tint = whatsappGreen,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "WhatsApp Remind",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = btnTextColor
+                            )
+                        }
                     }
                 }
             }

@@ -413,8 +413,8 @@ fun BookLedgerScreen(
     if (showEntryTypeSheet) {
         EntryTypeFilterBottomSheet(
             selectedType = selectedEntryTypeFilter,
-            onDismiss = { showEntryTypeSheet = false },
-            onSelectType = { selectedEntryTypeFilter = it }
+            onTypeSelected = { selectedEntryTypeFilter = it },
+            onDismiss = { showEntryTypeSheet = false }
         )
     }
 
@@ -649,11 +649,15 @@ fun DateFilterBottomSheet(
 @Composable
 fun EntryTypeFilterBottomSheet(
     selectedType: EntryTypeFilter,
-    onDismiss: () -> Unit,
-    onSelectType: (EntryTypeFilter) -> Unit
+    onTypeSelected: (EntryTypeFilter) -> Unit,
+    onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp)
+        ) {
             Text("Entry Type Filter", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Spacer(modifier = Modifier.height(10.dp))
             EntryTypeFilter.entries.forEach { type ->
@@ -661,15 +665,24 @@ fun EntryTypeFilterBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            onSelectType(type)
+                            onTypeSelected(type)
                             onDismiss()
                         }
-                        .padding(vertical = 10.dp),
+                        .padding(vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    RadioButton(selected = selectedType == type, onClick = null)
+                    RadioButton(
+                        selected = (selectedType == type),
+                        onClick = {
+                            onTypeSelected(type)
+                            onDismiss()
+                        }
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(type.name.replace("_", " "))
+                    Text(
+                        text = type.name.replace("_", " "),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
             }
         }

@@ -1,10 +1,6 @@
 package com.cashmath.app.service
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.net.Uri
-import androidx.core.content.ContextCompat
 import com.cashmath.app.data.EmiLoanEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,72 +78,8 @@ object BankSmsInboxManager {
         savePendingItems(context, emptyList())
     }
 
-    fun scanRecent7DaysSms(context: Context, loans: List<EmiLoanEntity> = emptyList()): List<BankSmsItem> {
-        val results = mutableListOf<BankSmsItem>()
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
-            return results
-        }
-
-        try {
-            val cr = context.contentResolver
-            val sevenDaysAgo = System.currentTimeMillis() - (7 * 86400 * 1000L)
-            val cursor = cr.query(
-                Uri.parse("content://sms/inbox"),
-                arrayOf("address", "body", "date"),
-                "date >= ?",
-                arrayOf(sevenDaysAgo.toString()),
-                "date DESC"
-            ) ?: return results
-
-            val existing = loadPendingItems(context)
-
-            cursor.use {
-                while (it.moveToNext()) {
-                    val address = it.getString(0) ?: ""
-                    val body = it.getString(1) ?: ""
-                    val date = it.getLong(2)
-
-                    val classified = TransactionSmsClassifier.classify(address, body) ?: continue
-
-                    // Check for matching loan EMI (± ₹50.0)
-                    val matchingLoan = loans.find { loan ->
-                        abs(loan.monthlyEmi - classified.amount) <= 50.0 ||
-                                (loan.lenderBank.isNotBlank() && body.lowercase().contains(loan.lenderBank.lowercase())) ||
-                                (loan.loanName.isNotBlank() && body.lowercase().contains(loan.loanName.lowercase()))
-                    }
-
-                    val bankSender = if (address.length > 6) address.takeLast(6).uppercase() else address
-
-                    val newItem = BankSmsItem(
-                        amount = classified.amount,
-                        isCashIn = !classified.isDebit,
-                        bankName = classified.partyOrSender.ifBlank { bankSender },
-                        snippet = if (body.length > 120) body.take(120) + "..." else body,
-                        timestamp = date,
-                        suggestedLoanId = matchingLoan?.id,
-                        suggestedLoanTitle = matchingLoan?.loanName
-                    )
-
-                    val isDup = existing.any { item ->
-                        abs(item.amount - newItem.amount) < 0.01 && abs(item.timestamp - newItem.timestamp) < 60000L
-                    } || results.any { item ->
-                        abs(item.amount - newItem.amount) < 0.01 && abs(item.timestamp - newItem.timestamp) < 60000L
-                    }
-
-                    if (!isDup) {
-                        results.add(newItem)
-                    }
-                }
-            }
-
-            if (results.isNotEmpty()) {
-                val combined = (results + existing).sortedByDescending { it.timestamp }
-                savePendingItems(context, combined)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
+    @Deprecated("READ_SMS background scanning is disabled to comply with Google Play policies")
+    fun scanRecent7DaysSms(context: Context, @Suppress("UNUSED_PARAMETER") loans: List<EmiLoanEntity> = emptyList()): List<BankSmsItem> {
         return loadPendingItems(context)
     }
 

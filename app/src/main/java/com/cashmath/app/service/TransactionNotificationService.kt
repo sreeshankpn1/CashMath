@@ -14,10 +14,11 @@ class TransactionNotificationService : NotificationListenerService() {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     private val targetPackages = setOf(
-        "com.phonepe.app",
-        "com.google.android.apps.nbu.paisa.user",
-        "net.one97.paytm",
-        "in.org.npci.upiapp"
+        "com.google.android.apps.nbu.paisa.user", // Google Pay India
+        "com.phonepe.app",                       // PhonePe
+        "net.one97.paytm",                        // Paytm
+        "com.dreamplug.androidapp",               // CRED
+        "in.org.npci.upiapp"                      // BHIM
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -39,7 +40,6 @@ class TransactionNotificationService : NotificationListenerService() {
             Log.i("CashMath", "Tracked: ₹${parsed.amount} [${parsed.type}] from ${parsed.paymentMode}")
             coroutineScope.launch {
                 val db = AppDatabase.getDatabase(applicationContext)
-                // Link to default "Personal" book (ID 1)
                 val transactionWithBook = parsed.copy(bookId = 1L)
                 db.transactionDao().insert(transactionWithBook)
             }

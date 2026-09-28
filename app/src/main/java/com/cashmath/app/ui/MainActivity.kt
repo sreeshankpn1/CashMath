@@ -44,6 +44,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.cashmath.app.data.*
+import com.cashmath.app.service.PartyTransactionManager
+import com.cashmath.app.ui.screens.khata.PartyDetailScreen
 import com.cashmath.app.parser.DateFilterType
 import com.cashmath.app.parser.DateTimeUtils
 import com.cashmath.app.security.BiometricAuthHelper
@@ -278,6 +280,9 @@ class MainActivity : FragmentActivity() {
                                             emiLoans = emiLoans,
                                             totalMonthlyEmi = totalMonthlyEmi,
                                             uiState = duesEmiUiState,
+                                            onPartyClick = { partyId ->
+                                                navController.navigate("party_detail/$partyId")
+                                            },
                                             onAddParty = { name, phone, toRec, toPay ->
                                                 viewModel.addDueParty(name, phone, toRec, toPay)
                                             },
@@ -624,6 +629,36 @@ class MainActivity : FragmentActivity() {
                                 }
                             }
                         )
+                    }
+                    composable(
+                        "party_detail/{partyId}",
+                        arguments = listOf(navArgument("partyId") { type = NavType.LongType })
+                    ) { backStackEntry ->
+                        val partyId = backStackEntry.arguments?.getLong("partyId") ?: 0L
+                        val dueParties by viewModel.dueParties.collectAsState()
+                        val party = dueParties.find { it.id == partyId }
+
+                        if (party != null) {
+                            val selectedBusiness by viewModel.selectedBusiness.collectAsState(initial = null)
+                            val bizName = selectedBusiness?.name ?: "CashMath Ledger"
+
+                            val transactions = remember(party.id, party.updatedAt) {
+                                PartyTransactionManager.getTransactions(context, party)
+                            }
+
+                            PartyDetailScreen(
+                                party = party,
+                                transactions = transactions,
+                                businessName = bizName,
+                                onNavigateBack = { navController.popBackStack() },
+                                onAddTransaction = { amount, isCredit, remarks, mode ->
+                                    viewModel.addPartyTransaction(context, party, amount, isCredit, remarks, mode)
+                                },
+                                onSettleBalance = { amount, paymentMode, isFullSettlement, recordInCashbook ->
+                                    viewModel.settlePartyBalance(context, party, amount, paymentMode, isFullSettlement, recordInCashbook)
+                                }
+                            )
+                        }
                     }
                     composable("auth") {
                         AuthScreen(

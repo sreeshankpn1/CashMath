@@ -18,6 +18,8 @@ import com.cashmath.app.data.model.BusinessMemberEntity
 import com.cashmath.app.data.model.DateRangeFilter
 import com.cashmath.app.data.model.EntryTypeFilter
 import com.cashmath.app.data.model.MemberRole
+import com.cashmath.app.data.model.PartyTransactionEntity
+import com.cashmath.app.service.PartyTransactionManager
 import com.cashmath.app.data.model.SortDirection
 import com.cashmath.app.parser.DateTimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -462,6 +464,108 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
     fun updateDueParty(party: DuePartyEntity) {
         viewModelScope.launch {
             duePartyDao.update(party)
+        }
+    }
+
+    fun addPartyTransaction(
+        context: Context,
+        party: DuePartyEntity,
+        amount: Double,
+        isCredit: Boolean,
+        remarks: String = "",
+        paymentMode: String = "Cash"
+    ) {
+        viewModelScope.launch {
+            val tx = PartyTransactionEntity(
+                partyId = party.id.toString(),
+                amount = amount,
+                isCredit = isCredit,
+                date = System.currentTimeMillis(),
+                remarks = remarks.ifBlank { if (isCredit) "Payment Received (Got)" else "Udhaar Given (Gave)" },
+                paymentMode = paymentMode
+            )
+            PartyTransactionManager.addTransaction(context, party.id, tx)
+
+            var currentReceive = party.toReceive
+            var currentPay = party.toPay
+
+            if (isCredit) {
+                if (currentReceive >= amount) {
+                    currentReceive -= amount
+                } else {
+                    val diff = amount - currentReceive
+                    currentReceive = 0.0
+                    currentPay += diff
+                }
+            } else {
+                if (currentPay >= amount) {
+                    currentPay -= amount
+                } else {
+                    val diff = amount - currentPay
+                    currentPay = 0.0
+                    currentReceive += diff
+                }
+            }
+
+            val updated = party.copy(
+                toReceive = currentReceive,
+                toPay = currentPay,
+                updatedAt = System.currentTimeMillis()
+            )
+            duePartyDao.update(updated)
+        }
+    }
+
+    fun settlePartyBalance(
+        context: Context,
+        party: DuePartyEntity,
+        amount: Double,
+        paymentMode: String = "Cash",
+        isFullSettlement: Boolean = true,
+        recordInCashbook: Boolean = false
+    ) {
+        viewModelScope.launch {
+            val netBalance = party.toReceive - party.toPay
+            val isCredit = netBalance > 0
+
+            val tx = PartyTransactionEntity(
+                partyId = party.id.toString(),
+                amount = amount,
+                isCredit = isCredit,
+                date = System.currentTimeMillis(),
+                remarks = "Balance Settlement",
+                paymentMode = paymentMode
+            )
+            PartyTransactionManager.addTransaction(context, party.id, tx)
+
+            val updated = if (isFullSettlement) {
+                party.copy(toReceive = 0.0, toPay = 0.0, updatedAt = System.currentTimeMillis())
+            } else {
+                var rec = party.toReceive
+                var pay = party.toPay
+                if (rec > 0) rec = maxOf(0.0, rec - amount)
+                else if (pay > 0) pay = maxOf(0.0, pay - amount)
+                party.copy(toReceive = rec, toPay = pay, updatedAt = System.currentTimeMillis())
+            }
+
+            duePartyDao.update(updated)
+
+            if (recordInCashbook) {
+                val bookId = selectedBookId.value ?: books.value.firstOrNull()?.id ?: 1L
+                val txType = if (isCredit) TransactionType.INCOME else TransactionType.EXPENSE
+                val cashTx = TransactionEntity(
+                    bookId = bookId,
+                    amount = amount,
+                    type = txType,
+                    partyName = party.name,
+                    paymentMode = paymentMode,
+                    remark = "Khata Settlement - ${party.name}",
+                    transactionTimestamp = System.currentTimeMillis(),
+                    createdByName = "Self"
+                )
+                transactionDao.insert(cashTx)
+                bookDao.recalculateBookBalance(bookId)
+            }
         }
     }
 

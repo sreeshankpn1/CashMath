@@ -1,5 +1,7 @@
 package com.cashmath.app.ui.screens
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,9 +22,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.NotificationManagerCompat
 import com.cashmath.app.data.BookEntity
 import com.cashmath.app.data.BusinessEntity
 import com.cashmath.app.data.model.BusinessMemberEntity
+import com.cashmath.app.service.BankSmsInboxManager
 import com.cashmath.app.subscription.SubscriptionManager
 import com.cashmath.app.subscription.SubscriptionState
 import com.cashmath.app.subscription.UserPlan
@@ -67,8 +71,10 @@ fun BooksDashboardScreen(
     var showTeamSheet by remember { mutableStateOf(false) }
     var showPaywallSheet by remember { mutableStateOf(false) }
     var showSmsInboxSheet by remember { mutableStateOf(false) }
+    var showNotificationAccessDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val pendingCount = remember(showSmsInboxSheet) { BankSmsInboxManager.loadPendingItems(context).size }
     val subManager = remember { SubscriptionManager(context) }
     val subState by subManager.subscriptionState.collectAsState(
         initial = SubscriptionState(
@@ -86,8 +92,28 @@ fun BooksDashboardScreen(
                 activeBusinessName = selectedBusiness?.name ?: "Select Business",
                 onSwitchBusinessClick = { showBusinessSheet = true },
                 actions = {
-                    IconButton(onClick = { showSmsInboxSheet = true }) {
-                        Icon(Icons.Default.Sms, contentDescription = "Bank SMS Queue", tint = EmeraldGreen)
+                    IconButton(onClick = {
+                        val isGranted = NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+                        if (!isGranted) {
+                            showNotificationAccessDialog = true
+                        } else {
+                            showSmsInboxSheet = true
+                        }
+                    }) {
+                        BadgedBox(
+                            badge = {
+                                if (pendingCount > 0) {
+                                    Badge(
+                                        containerColor = Color(0xFFEF4444),
+                                        contentColor = Color.White
+                                    ) {
+                                        Text("$pendingCount", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.Sms, contentDescription = "Bank SMS Queue", tint = EmeraldGreen)
+                        }
                     }
                     IconButton(onClick = {
                         showTeamSheet = true
@@ -307,6 +333,43 @@ fun BooksDashboardScreen(
             onConfirm = { bookName ->
                 onAddBook(bookName)
                 showAddBookDialog = false
+            }
+        )
+    }
+
+    if (showNotificationAccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showNotificationAccessDialog = false },
+            title = {
+                Text("Notification Access Required 🔔", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            },
+            text = {
+                Text(
+                    "To automatically detect UPI payments, please enable Notification Access for CashMath.",
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showNotificationAccessDialog = false
+                        try {
+                            val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldGreen),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Enable Access", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNotificationAccessDialog = false }) {
+                    Text("Cancel", color = SlateGray)
+                }
             }
         )
     }

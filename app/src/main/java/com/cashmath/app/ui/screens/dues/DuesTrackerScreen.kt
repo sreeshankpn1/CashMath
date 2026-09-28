@@ -95,6 +95,7 @@ fun DuesTrackerScreen(
     onIncrementPaidMonth: (Long) -> Unit,
     onDecrementPaidMonth: (Long) -> Unit = {},
     onDeleteLoan: (Long) -> Unit,
+    onPartyClick: (Long) -> Unit = {},
     onShareDuesPdf: () -> Unit = {},
     onShareDuesCsv: () -> Unit = {},
     onSwitchBusinessClick: () -> Unit = {}
@@ -242,7 +243,49 @@ fun DuesTrackerScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            var partyFilter by remember { mutableStateOf("ALL") } // "ALL", "PENDING", "SETTLED"
+            val pendingParties = remember(dueParties) { dueParties.filter { abs(it.toReceive - it.toPay) > 0.01 } }
+            val settledParties = remember(dueParties) { dueParties.filter { abs(it.toReceive - it.toPay) <= 0.01 } }
+            val displayedParties = remember(dueParties, partyFilter) {
+                when (partyFilter) {
+                    "PENDING" -> pendingParties
+                    "SETTLED" -> settledParties
+                    else -> dueParties
+                }
+            }
+
+            if (pagerState.currentPage == 0 && dueParties.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf(
+                        "ALL" to "All (${dueParties.size})",
+                        "PENDING" to "Pending (${pendingParties.size})",
+                        "SETTLED" to "Settled (${settledParties.size})"
+                    ).forEach { (key, label) ->
+                        val isSelected = partyFilter == key
+                        Surface(
+                            onClick = { partyFilter = key },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) financialGreen.copy(alpha = 0.15f) else neutralCardBg,
+                            border = BorderStroke(1.dp, if (isSelected) financialGreen else neutralBorder)
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) financialGreen else mutedText,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
 
             // HORIZONTAL PAGER
             HorizontalPager(
@@ -254,8 +297,9 @@ fun DuesTrackerScreen(
             ) { page ->
                 when (page) {
                     0 -> DuesPartiesTabContent(
-                        parties = dueParties,
+                        parties = displayedParties,
                         mutedText = mutedText,
+                        onPartyClick = onPartyClick,
                         onWhatsAppClick = { sendWhatsAppReminder(it) },
                         onEditParty = { partyToEdit = it },
                         onDeleteParty = onDeleteParty
@@ -397,6 +441,7 @@ fun DuesTrackerScreen(
 private fun DuesPartiesTabContent(
     parties: List<DuePartyEntity>,
     mutedText: Color,
+    onPartyClick: (Long) -> Unit = {},
     onWhatsAppClick: (DuePartyEntity) -> Unit,
     onEditParty: (DuePartyEntity) -> Unit,
     onDeleteParty: (Long) -> Unit
@@ -414,6 +459,7 @@ private fun DuesPartiesTabContent(
             items(parties, key = { it.id }) { party ->
                 PartyCard(
                     party = party,
+                    onPartyClick = { onPartyClick(party.id) },
                     onWhatsAppClick = { onWhatsAppClick(party) },
                     onEditClick = { onEditParty(party) },
                     onDeleteClick = { onDeleteParty(party.id) }

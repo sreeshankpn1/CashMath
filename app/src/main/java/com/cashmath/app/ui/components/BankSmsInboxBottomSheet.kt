@@ -3,8 +3,6 @@ package com.cashmath.app.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,19 +10,17 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cashmath.app.data.BookEntity
@@ -42,7 +38,7 @@ import java.util.Locale
 @Composable
 fun BankSmsInboxBottomSheet(
     books: List<BookEntity>,
-    loans: List<EmiLoanEntity> = emptyList(),
+    @Suppress("UNUSED_PARAMETER") loans: List<EmiLoanEntity> = emptyList(),
     onDismiss: () -> Unit,
     onSaveTransactionToBook: (bookId: Long, amount: Double, isCashIn: Boolean, partyName: String, remark: String) -> Unit
 ) {
@@ -96,50 +92,25 @@ fun BankSmsInboxBottomSheet(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Bank SMS Queue (${itemsList.size})",
+                        text = "Pending Queue (${itemsList.size})",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = titleText
                     )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Auto 7-Day Scan Trigger Button
-                    Surface(
-                        onClick = {
-                            val scanned = BankSmsInboxManager.scanRecent7DaysSms(context, loans)
-                            itemsList = scanned
-                            Toast.makeText(context, "Scanned 7 Days SMS (${scanned.size} total in queue)", Toast.LENGTH_SHORT).show()
-                        },
-                        shape = RoundedCornerShape(10.dp),
-                        color = emeraldAccent.copy(alpha = 0.15f),
-                        border = BorderStroke(1.dp, emeraldAccent.copy(alpha = 0.4f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Scan", tint = emeraldAccent, modifier = Modifier.size(14.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Scan 7 Days", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = emeraldAccent)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    IconButton(
-                        onClick = onDismiss,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(cardBg, CircleShape)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = titleText,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(cardBg, CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = titleText,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
@@ -149,27 +120,19 @@ fun BankSmsInboxBottomSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp),
+                        .height(160.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = mutedText, modifier = Modifier.size(36.dp))
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("No pending bank SMS items in queue.", fontSize = 13.sp, color = mutedText)
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = {
-                                val scanned = BankSmsInboxManager.scanRecent7DaysSms(context, loans)
-                                itemsList = scanned
-                                if (scanned.isEmpty()) {
-                                    Toast.makeText(context, "No banking SMS detected in last 7 days", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = emeraldAccent),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("Auto-Scan Recent 7 Days SMS 📱", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
+                        Text(
+                            text = "No pending transactions. Incoming UPI and bank alerts will appear here for 1-tap entry.",
+                            fontSize = 13.sp,
+                            color = mutedText,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp)
+                        )
                     }
                 }
             } else {

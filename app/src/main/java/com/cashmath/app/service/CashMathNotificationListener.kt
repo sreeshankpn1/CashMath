@@ -8,6 +8,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.cashmath.app.R
 import com.cashmath.app.data.AppDatabase
 import com.cashmath.app.data.SettingsRepository
 import com.cashmath.app.data.TransactionEntity
@@ -23,10 +24,11 @@ class CashMathNotificationListener : NotificationListenerService() {
     private val notificationIdCounter = AtomicInteger(1000)
 
     private val targetPackages = setOf(
-        "com.phonepe.app",
-        "com.google.android.apps.nbu.paisa.user",
-        "net.one97.paytm",
-        "in.org.npci.upiapp",
+        "com.google.android.apps.nbu.paisa.user", // Google Pay India
+        "com.phonepe.app",                       // PhonePe
+        "net.one97.paytm",                        // Paytm
+        "com.dreamplug.androidapp",               // CRED
+        "in.org.npci.upiapp",                     // BHIM
     )
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -46,6 +48,7 @@ class CashMathNotificationListener : NotificationListenerService() {
 
         val classified = TransactionSmsClassifier.classify(title, text) ?: return
 
+        // 1. Post to in-app Pending Transactions Manager & BankSmsInboxManager
         PendingTransactionManager.postTransaction(
             PendingTransactionManager.PendingTransaction(
                 amount = classified.amount,
@@ -55,6 +58,25 @@ class CashMathNotificationListener : NotificationListenerService() {
             )
         )
 
+        val appName = when {
+            pkg.contains("nbu.paisa") -> "Google Pay"
+            pkg.contains("phonepe") -> "PhonePe"
+            pkg.contains("paytm") -> "Paytm"
+            pkg.contains("dreamplug") -> "CRED"
+            pkg.contains("upiapp") -> "BHIM"
+            else -> classified.partyOrSender
+        }
+
+        val pendingItem = BankSmsItem(
+            amount = classified.amount,
+            isCashIn = !classified.isDebit,
+            bankName = appName,
+            snippet = if (text.isNotBlank()) text else title,
+            timestamp = System.currentTimeMillis()
+        )
+        BankSmsInboxManager.addPendingItem(applicationContext, pendingItem)
+
+        // 2. Auto-record if user confirmation is disabled
         scope.launch {
             val db = AppDatabase.getDatabase(applicationContext)
             val requireConfirmation = settingsRepo.requireUserConfirmation.value
@@ -67,8 +89,8 @@ class CashMathNotificationListener : NotificationListenerService() {
                     amount = classified.amount,
                     type = if (classified.isDebit) TransactionType.EXPENSE else TransactionType.INCOME,
                     partyName = classified.partyOrSender,
-                    paymentMode = "Auto SMS/App",
-                    remark = "Auto-tracked via SMS/Notification",
+                    paymentMode = appName,
+                    remark = "Auto-tracked via $appName",
                     transactionTimestamp = System.currentTimeMillis(),
                     createdByName = "Auto-Tracker",
                 )
@@ -103,7 +125,7 @@ class CashMathNotificationListener : NotificationListenerService() {
         }
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(com.cashmath.app.R.drawable.ic_stat_notification)
+            .setSmallIcon(R.drawable.ic_stat_notification)
             .setContentTitle(notificationTitle)
             .setContentText("${classified.partyOrSender} • Tap to confirm book assignment")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
